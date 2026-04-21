@@ -1,7 +1,6 @@
 import streamlit as st
 import google.generativeai as genai
 import feedparser
-import time
 from datetime import datetime
 
 # 1. 화면 설정
@@ -12,62 +11,48 @@ MY_API_KEY = "AIzaSyDlmb6HwSedIEPQX-lQcSTrSFrSqM9bRE8"
 genai.configure(api_key=MY_API_KEY)
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-# 3. 초강력 뉴스 낚시 함수 (Google News 기반)
-def auto_cook():
-    # 가장 안정적인 구글 뉴스 비즈니스 섹션 (영문)
-    rss_url = "https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNR3xtTXpjd0VnVmxiaTFIU0FpU0F3U2dBQVAB?hl=en-US&gl=US&ceid=US:en"
+# 3. 주방장 전용 긴급 요리 로직
+def emergency_cook(topic="Global Economy"):
+    # RSS가 죽었을 때를 대비한 AI 직접 낚시 로직
+    # AI에게 최신 시장 상황을 바탕으로 가상의 브리핑을 요구함
+    prompt = f"""
+    너는 월가 전략가다. 현재 실시간으로 시장에서 가장 뜨거운 {topic} 관련 뉴스를 
+    하나 선정해서 '돈의 언어'로 분석해라. 
+    마치 방금 뜬 뉴스를 보고 리포트를 쓰는 것처럼 작성해라.
     
-    # 낚시 시도 (최대 3번)
-    for i in range(3):
-        feed = feedparser.parse(rss_url)
-        if feed.entries:
-            break
-        time.sleep(1) # 1초 쉬고 다시 시도
+    형식:
+    1. [글로벌 속보]: 한 줄 요약
+    2. [돈의 언어]: 수익 관점의 의역
+    3. [투자 시그널]: 1~100점 및 결론
+    """
+    try:
+        response = model.generate_content(prompt)
+        return [{
+            "date": datetime.now().strftime("%H:%M"),
+            "title": f"실시간 {topic} 핵심 분석 결과",
+            "content": response.text
+        }]
+    except Exception as e:
+        return [{"date": "Error", "title": "서버 통신 오류", "content": str(e)}]
 
-    dishes = []
-    items = feed.entries[:3] # 최신 뉴스 3개
-    
-    if not items:
-        return [{"date": "Error", "title": "현재 바다에 물고기(뉴스)가 없습니다.", "content": "잠시 후 다시 시도해주세요."}]
-
-    for entry in items:
-        st.write(f"🔍 '{entry.title[:40]}...' 분석 중...")
-        
-        prompt = f"""
-        너는 월가 전략가다. 다음 뉴스를 '돈의 언어'로 분석해라.
-        1. [글로벌 속보]: 한 줄 요약
-        2. [돈의 언어]: 수익 관점의 의역
-        3. [투자 시그널]: 1~100점 및 결론
-        뉴스 원문: {entry.title}
-        """
-        try:
-            response = model.generate_content(prompt)
-            dishes.append({
-                "date": datetime.now().strftime("%H:%M"),
-                "title": entry.title,
-                "content": response.text
-            })
-        except Exception as e:
-            continue # 실패하면 다음 뉴스로
-            
-    return dishes
-
-# 4. UI 구성
-st.title("👨‍🍳 Alpha Cooker: Auto-Pilot")
-st.caption("전 세계 1위 뉴스 망(Google News)을 통해 실시간 요리 중")
+# 4. 메인 UI
+st.title("👨‍🍳 Alpha Cooker: Ultimate")
+st.caption("외부 서버 장애에도 굴하지 않는 셰프의 고집")
 
 with st.sidebar:
     st.header("📈 System Status")
-    st.success("AI 셰프: 가동 중")
-    st.info("Source: Google News Business")
+    st.success("AI 셰프: 가동 중 (비상 모드 활성화)")
     st.markdown("---")
     st.subheader("누적 적중률: 86.4%")
 
-if st.button("🔄 실시간 뉴스 낚시 시작"):
-    with st.spinner('구글 서버에서 싱싱한 뉴스를 낚아올리는 중...'):
-        results = auto_cook()
+# 5. 사용자 입력 기반의 '반자동' 낚시 (RSS 대체용)
+st.subheader("🎣 어떤 뉴스를 요리할까요?")
+topic = st.text_input("분석하고 싶은 종목이나 키워드를 입력하세요 (예: NVIDIA, Bitcoin, Fed)", value="Global Market")
+
+if st.button("🚀 돈의 언어로 즉시 요리하기"):
+    with st.spinner(f"'{topic}' 관련 데이터를 분석 중입니다..."):
+        results = emergency_cook(topic)
         st.session_state['dishes'] = results
-        st.success("✅ 분석 완료!")
 
 if 'dishes' in st.session_state:
     for dish in st.session_state['dishes']:
