@@ -10,7 +10,7 @@ try:
     api_key = st.secrets["GEMINI_API_KEY"]
     genai.configure(api_key=api_key)
     # 가장 빠르고 안정적인 최신 모델 선택
-    model = genai.GenerativeModel('gemini-1.5-flash-latest')
+    model = genai.GenerativeModel('gemini-pro')
 except Exception as e:
     st.error("⚠️ API 키 설정 오류: Streamlit Cloud 설정(Secrets)에서 GEMINI_API_KEY를 확인하세요.")
     st.stop()
