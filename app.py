@@ -4,27 +4,25 @@ import google.generativeai as genai
 # 1. 웹사이트 기본 설정
 st.set_page_config(page_title="Alpha Cooker", layout="wide")
 
-# 2. API 키 설정 (보안상 주의)
+# 2. API 설정
 api_key = "AIzaSyDlmb6HwSedIEPQX-lQcSTrSFrSqM9bRE8"
 genai.configure(api_key=api_key)
 
-# [핵심 수정] 모델 이름 앞에 'models/'를 명확히 붙였습니다.
-model = genai.GenerativeModel('models/gemini-1.5-flash')
+# [필살기] 가장 호환성이 높은 모델 명칭으로 설정
+# 2026년 기준 가장 범용적인 명칭입니다.
+MODEL_NAME = 'gemini-1.5-pro'
 
-# 3. 화면 UI 구성
+# 3. 화면 UI
 st.title("👨‍🍳 Alpha Cooker: 돈의 언어 번역기")
 st.caption("통대생의 직관과 Gemini API가 결합된 초고속 뉴스 분석 엔진")
 st.markdown("---")
 
-# 4. 입력창
 raw_text = st.text_area("📢 분석할 영어 뉴스 원문을 여기에 붙여넣으세요:", height=250)
 
-# 5. 실행 로직
 if st.button("🚀 돈의 언어로 요리하기"):
     if not raw_text:
         st.warning("분석할 텍스트를 입력해주세요.")
     else:
-        # 비즈니스 로직 프롬프트
         prompt = f"""
         너는 통대 출신 언어 분석가이자 월스트리트 투자 전략가다. 
         다음 뉴스를 읽고 '돈의 언어'로 재해석해라. 
@@ -38,13 +36,23 @@ if st.button("🚀 돈의 언어로 요리하기"):
         
         with st.spinner('🎯 분석 중...'):
             try:
+                # 모델 선언 방식을 가장 안전하게 변경
+                model = genai.GenerativeModel(MODEL_NAME)
                 response = model.generate_content(prompt)
+                
                 st.success("✅ 분석 완료!")
                 st.markdown("---")
                 st.write(response.text)
+                
             except Exception as e:
-                # 상세 에러 메시지 출력
-                st.error(f"요리 중 오류가 발생했습니다. 원인: {e}")
+                # 에러 발생 시 다른 모델로 즉시 재시도 (백업 로직)
+                try:
+                    model = genai.GenerativeModel('gemini-1.5-flash')
+                    response = model.generate_content(prompt)
+                    st.success("✅ 분석 완료 (백업 모델 사용)")
+                    st.write(response.text)
+                except Exception as e2:
+                    st.error(f"모든 모델 가동 실패. 원인: {e2}")
 
 st.markdown("---")
 st.caption("© 2026 Alpha Cooker")
