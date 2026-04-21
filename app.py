@@ -11,7 +11,7 @@ api_key = st.sidebar.text_input("Gemini API Key를 입력하세요", type="passw
 
 if api_key:
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-1.5-flash-latest')
 
     # 사용자 입력창
     raw_text = st.text_area("영어 뉴스 원문을 붙여넣으세요:", height=200)
