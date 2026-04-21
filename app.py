@@ -4,13 +4,9 @@ import google.generativeai as genai
 # 1. 웹사이트 기본 설정
 st.set_page_config(page_title="Alpha Cooker", layout="wide")
 
-# 2. API 설정
+# 2. API 설정 (보안 주의: 작동 확인 후 나중에 Secrets로 옮기세요)
 api_key = "AIzaSyDlmb6HwSedIEPQX-lQcSTrSFrSqM9bRE8"
 genai.configure(api_key=api_key)
-
-# [필살기] 가장 호환성이 높은 모델 명칭으로 설정
-# 2026년 기준 가장 범용적인 명칭입니다.
-MODEL_NAME = 'gemini-1.5-pro'
 
 # 3. 화면 UI
 st.title("👨‍🍳 Alpha Cooker: 돈의 언어 번역기")
@@ -23,6 +19,7 @@ if st.button("🚀 돈의 언어로 요리하기"):
     if not raw_text:
         st.warning("분석할 텍스트를 입력해주세요.")
     else:
+        # 비즈니스 로직 프롬프트
         prompt = f"""
         너는 통대 출신 언어 분석가이자 월스트리트 투자 전략가다. 
         다음 뉴스를 읽고 '돈의 언어'로 재해석해라. 
@@ -35,24 +32,24 @@ if st.button("🚀 돈의 언어로 요리하기"):
         """
         
         with st.spinner('🎯 분석 중...'):
-            try:
-                # 모델 선언 방식을 가장 안전하게 변경
-                model = genai.GenerativeModel(MODEL_NAME)
-                response = model.generate_content(prompt)
-                
-                st.success("✅ 분석 완료!")
-                st.markdown("---")
-                st.write(response.text)
-                
-            except Exception as e:
-                # 에러 발생 시 다른 모델로 즉시 재시도 (백업 로직)
+            # [2026 최신 패치] 가장 인식률이 높은 모델 명칭 시도 순서
+            success = False
+            for model_name in ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro']:
                 try:
-                    model = genai.GenerativeModel('gemini-1.5-flash')
+                    # 'models/'를 생략하고 이름만 넣는 방식이 최신 표준입니다.
+                    model = genai.GenerativeModel(model_name)
                     response = model.generate_content(prompt)
-                    st.success("✅ 분석 완료 (백업 모델 사용)")
+                    
+                    st.success(f"✅ 분석 완료! (사용한 모델: {model_name})")
+                    st.markdown("---")
                     st.write(response.text)
-                except Exception as e2:
-                    st.error(f"모든 모델 가동 실패. 원인: {e2}")
+                    success = True
+                    break # 성공하면 멈춤
+                except Exception:
+                    continue # 실패하면 다음 모델로
+            
+            if not success:
+                st.error("구글 API 서버에서 모델을 찾을 수 없습니다. API 키의 활성화 상태나 권한을 확인해주세요.")
 
 st.markdown("---")
 st.caption("© 2026 Alpha Cooker")
